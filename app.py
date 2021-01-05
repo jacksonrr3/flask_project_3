@@ -6,19 +6,63 @@ import random
 from flask import Flask, render_template, abort, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import FlaskForm, csrf
-from wtforms import StringField, IntegerField,
-
+from flask_migrate import Migrate
+from wtforms import StringField, IntegerField
 
 from data import goals, days
 
 
 app = Flask(__name__)
-csrf = csrf.CSRFProtect(app)
-SECRET_KEY = os.urandom(43) # creating random key
+# csrf = csrf.CSRFProtect(app)
+SECRET_KEY = "secret_key"                       # creating random key
 app.config['SECRET_KEY'] = SECRET_KEY
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///data/data_base.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
+
+
+class Teacher(db.Model):
+    __tablename__ = "teachers"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    about = db.Column(db.Text, nullable=False)
+    rating = db.Column(db.Float, nullable=False)
+    picture = db.Column(db.String(), nullable=False)
+    price = db.Column(db.Integer, nullable=False)
+    goals = db.Column(db.String(), nullable=False)
+    free = db.Column(db.String(), nullable=False)
+
+
+class Booking(db.Model):
+    __tablename__ = "bookings"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    phone = db.Column(db.String(), nullable=False)
+    weekday = db.Column(db.String(), nullable=False)
+    time = db.Column(db.String(), nullable=False)
+
+
+class Goal(db.Model):
+    __tablename__ = "goals"
+
+    id = db.Column(db.Integer, primary_key=True,)
+    name = db.Column(db.String(), unique=True, nullable=False)
+    value = db.Column(db.String(), nullable=False)
+
+
+class Request(db.Model):
+    __tablename__ = "requests"
+
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    phone = db.Column(db.String(), nullable=False)
+    time = db.Column(db.String(), nullable=False)
+    goal = db.Column(db.String(), nullable=False)
+
+#db.create_all()
 
 
 def read_data_from_json_file(path):
@@ -38,10 +82,6 @@ def write_data_to_json_file(path, data):
     except IOError:
         print("An IOError has occurred!")
 
-
-class Teacher(db.Model):
-    __tablename__ = "teachers"
-    id = db.Column(db.Integer, primary_key=True)
 
 
 @app.route('/')
@@ -153,7 +193,7 @@ def route_booking_done():
                            client_phone=client_phone)
 
 
-if __name__ == '__main__':
-    app.run('0.0.0.0', 8000)
+#if __name__ == '__main__':
+ #   app.run('0.0.0.0', 8000)
 
 
