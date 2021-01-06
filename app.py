@@ -22,6 +22,12 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)
 
 
+teachers_goals_association = db.Table("teachers_goals",
+                                      db.Column("teacher_id", db.Integer, db.ForeignKey("teachers.id")),
+                                      db.Column("goal_id", db.Integer, db.ForeignKey("goals.id"))
+                                      )
+
+
 class Teacher(db.Model):
     __tablename__ = "teachers"
 
@@ -31,8 +37,11 @@ class Teacher(db.Model):
     rating = db.Column(db.Float, nullable=False)
     picture = db.Column(db.String(), nullable=False)
     price = db.Column(db.Integer, nullable=False)
-    goals = db.Column(db.String(), nullable=False)
+    # goals = db.Column(db.String(), nullable=False)
+    goals = db.relationship("Goal", secondary=teachers_goals_association, back_populates="teachers")
     free = db.Column(db.String(), nullable=False)
+
+    bookings = db.relationship("Booking", back_populates="teacher")
 
 
 class Booking(db.Model):
@@ -44,6 +53,9 @@ class Booking(db.Model):
     weekday = db.Column(db.String(), nullable=False)
     time = db.Column(db.String(), nullable=False)
 
+    teacher_id = db.Column(db.Integer, db.ForeignKey("teachers.id"))
+    teacher = db.relationship("Teacher", back_populates="bookings")
+
 
 class Goal(db.Model):
     __tablename__ = "goals"
@@ -51,6 +63,7 @@ class Goal(db.Model):
     id = db.Column(db.Integer, primary_key=True,)
     name = db.Column(db.String(), unique=True, nullable=False)
     value = db.Column(db.String(), nullable=False)
+    teachers = db.relationship("Teacher", secondary=teachers_goals_association, back_populates="goals")
 
 
 class Request(db.Model):
@@ -62,7 +75,8 @@ class Request(db.Model):
     time = db.Column(db.String(), nullable=False)
     goal = db.Column(db.String(), nullable=False)
 
-#db.create_all()
+
+# db.create_all()
 
 
 def read_data_from_json_file(path):
@@ -193,7 +207,17 @@ def route_booking_done():
                            client_phone=client_phone)
 
 
-#if __name__ == '__main__':
- #   app.run('0.0.0.0', 8000)
+# if __name__ == '__main__':
+#    app.run('0.0.0.0', 8000)
 
 
+# test db
+
+
+teachers = db.session.query(Teacher).all()
+for teacher in teachers:
+    goals = []
+    for goal in teacher.goals:
+        goals.append(goal.value)
+    print(teacher.id, teacher.name, teacher.picture, teacher.price, goals, teacher.free)
+    print('--------------------------------------------------------------------------------')
