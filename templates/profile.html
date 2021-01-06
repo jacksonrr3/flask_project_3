@@ -12,7 +12,7 @@
             <section class="teacher=info">
 
               <h1 class="h2">{{ teacher.name }}</h1>
-              <p>{% for goal in teacher.goals %}<span class="badge badge-secondary mr-2">{{ goals[goal] }}</span>{% endfor %}</p>
+              <p>{% for goal in teacher.goals %}<span class="badge badge-secondary mr-2">{{ goal.value }}</span>{% endfor %}</p>
               <p>Рейтинг: {{ teacher.rating }} Ставка: {{ teacher.price }} / час</p>
               <p>{{ teacher.about }}</p>
 
@@ -21,10 +21,10 @@
             <section class="available">
 
               <h4 class="mb-4 mt-5">Записаться на пробный урок</h4>
-              {% for day, teacher_times in teacher.free.items() %} <!--Loop input days-->
+              {% for day, times in free.items() %} <!--Loop input days-->
               <h6 class="mt-4">{{ days[day] }}</h6>
               {% set ns = namespace(not_found=true) %}      <!--Set control variable for checking free time a day-->
-                {% for time, free in teacher_times.items() %}
+                {% for time, free in times.items() %}
                   {% if free == true%}
                     {% set ns.not_found = false %}
                     <a href="/booking/{{ teacher.id }}/{{ day }}/{{ time|replace(':00', '') }}" class="btn btn-outline-success mr-2 my-2">{{ time }} свободно</a>
