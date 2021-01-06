@@ -77,11 +77,11 @@ class Request(db.Model):
     goal = db.Column(db.String(), nullable=False)
 
 
-# db.create_all()
-
-
-#class RequestForm(FlaskForm):
-    #name =
+class RequestForm(FlaskForm):
+    name = StringField("Вас зовут",
+                       validators=[InputRequired()])
+    phone = StringField("Ваш телефон",
+                        validators=[InputRequired()])
 
 
 class BookingForm(FlaskForm):
@@ -89,24 +89,6 @@ class BookingForm(FlaskForm):
                        validators=[InputRequired()])
     phone = StringField("Ваш телефон",
                         validators=[InputRequired()])
-
-
-def read_data_from_json_file(path):
-    """ reading data from data_base json file, return dict """
-    try:
-        with open(path, 'r') as jf:
-            return json.load(jf)
-    except IOError:
-        print("An IOError has occurred!")
-
-
-def write_data_to_json_file(path, data):
-    """ writing data to data_base json file"""
-    try:
-        with open(path, 'w') as jf:
-            json.dump(data, jf)
-    except IOError:
-        print("An IOError has occurred!")
 
 
 @app.errorhandler(404)
@@ -117,6 +99,7 @@ def render_not_found(error):
 @app.route('/')
 def render_index():
     teachers = db.session.query(Teacher).all()
+    print(type(teachers))
     ch_teachers = random.sample(teachers, 6)
     goals = db.session.query(Goal).all()
     return render_template('index.html',
@@ -141,19 +124,18 @@ def render_all():
         random.shuffle(teachers)
     return render_template('all.html',
                            teachers=teachers)
-                           #goals=goals)
 
 
+# done
 @app.route('/goals/<goal>/')
 def render_goal(goal):
-    #teachers = read_data_from_json_file('data_base.json')
-    #teachers.sort(key=operator.itemgetter("rating"), reverse=True)
-    teachers = db.session.query(Teacher).filter(Teacher.goals.any(goal)).order_by(Teacher.rating.desc())
+    teachers = db.session.query(Teacher).filter(Teacher.goals.any(Goal.name == goal)).order_by(Teacher.rating.desc())
+    teachers = teachers.all()
     goal = db.session.query(Goal).filter(Goal.name == goal).first().value
     return render_template('goal.html',
                            goal=goal,
-                           #goals=goals,
                            teachers=teachers)
+
 
 # done
 @app.route('/profiles/<int:teacher_id>/')
@@ -166,39 +148,31 @@ def render_teacher(teacher_id):
                            days=days)
 
 
-#@app.route('/request/')
-#def render_request():
-#    return render_template('request.html')
-
-
 @app.route('/request/', methods=['GET', 'POST'])
 def route_request():
+    form = RequestForm()
     if request.method == "POST":
         goal = request.form.get("goal")
         time = request.form.get("time")
-        name = request.form.get("name")
-        phone = request.form.get("phone")
+        name = form.name.data
+        phone = form.phone.data
         req = Request(name=name, phone=phone, time=time, goal=goal)
         db.session.add(req)
         db.session.commit()
-        #requests = read_data_from_json_file('request.json')
-        #requests.append(req)
-        #write_data_to_json_file('request.json', requests)
         return render_template('request_done.html',
                                goal=goal,
                                time=time,
                                name=name,
                                phone=phone)
-    return render_template('request.html')
+    return render_template('request.html', form=form)
 
 
 @app.route('/booking/<int:teacher_id>/<day>/<time>/')
 def route_booking(teacher_id, day, time):
     time = time + ':00'
-    teachers = read_data_from_json_file('data_base.json')
-    if teacher_id >= len(teachers) or day not in days:
+    teacher = db.session.query(Teacher).get_or_404(teacher_id)
+    if day not in days:
         abort(404)
-    teacher = teachers[teacher_id]
     return render_template('booking.html',
                            teacher=teacher,
                            days=days,
@@ -208,19 +182,22 @@ def route_booking(teacher_id, day, time):
 
 @app.route('/booking_done/', methods=['POST'])
 def route_booking_done():
-    teachers = read_data_from_json_file('data_base.json')
     client_weekday = request.form.get("clientWeekday")
     client_time = request.form.get("clientTime")
     client_teacher = request.form.get("clientTeacher")
     client_name = request.form.get("clientName")
     client_phone = request.form.get("clientPhone")
-    teachers[int(client_teacher)]["free"][client_weekday][client_time] = False
-    write_data_to_json_file('data_base.json', teachers)
-
-    bookings = read_data_from_json_file('booking.json')
-    bookings.append((client_name, client_phone, client_weekday, client_time))
-    write_data_to_json_file('booking.json', bookings)
-
+    teacher = db.session.query(Teacher).get_or_404(int(client_teacher))
+    free = json.loads(teacher.free)
+    free[client_weekday][client_time] = False
+    teacher.free = json.dumps(free)
+    # добавить связь с teacher по teacher_id
+    booking = Booking(name=client_name,
+                      phone=client_phone,
+                      weekday=client_weekday,
+                      time=client_time)
+    db.session.add(booking)
+    db.session.commit()
     client_weekday = days[client_weekday]
     return render_template('booking_done.html',
                            day=client_weekday,
@@ -229,15 +206,15 @@ def route_booking_done():
                            client_phone=client_phone)
 
 
-#if __name__ == '__main__':
-#    app.run('0.0.0.0', 8000)
+if __name__ == '__main__':
+    app.run('0.0.0.0', 8000)
 
 
 # test db
 
 
 #teachers = db.session.query(Teacher).all()
-#print(type(teachers[0].goals))
+#print(dir(teachers[0].goals))
 #for teacher in teachers:
     #goals = []
     #for goal in teacher.goals:
