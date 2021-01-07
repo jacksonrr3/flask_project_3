@@ -5,6 +5,8 @@ from data import teachers, goals
 
 
 def load_goals_to_db():
+    """ fill goals table in database """
+
     for key, value in goals.items():
         goal = Goal(name=key, value=value)
         db.session.add(goal)
@@ -12,6 +14,8 @@ def load_goals_to_db():
 
 
 def load_teachers_to_db():
+    """ fill teachers table in database """
+
     for teacher in teachers:
         free = json.dumps(teacher["free"])
         db_teacher = Teacher(id=teacher["id"],
