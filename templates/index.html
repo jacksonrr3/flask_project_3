@@ -8,9 +8,6 @@
       <div class="btn-group mx-auto mb-0" role="group" aria-label="Basic example">
         {% for goal in goals %}
         <a href="/goals/{{ goal.name }}/" class="btn btn-outline-secondary">{{ goal.value }}</a>
-        <!--<a href="/goals/study/" class="btn btn-outline-secondary">🏫 Для школы</a>-->
-       <!-- <a href="/goals/work/" class="btn btn-outline-secondary">🏢 Для работы</a>-->
-        <!--<a href="/goals/relocate/" class="btn btn-outline-secondary">🚜 Для переезда</a>-->
         {% endfor %}
       </div>
     </div>
