@@ -105,11 +105,10 @@ def render_not_found(error):
 def render_index():
     """ prepare data and render route '/' """
 
-    teachers = db.session.query(Teacher).all()
-    ch_teachers = random.sample(teachers, 6)
+    teachers = db.session.query(Teacher).order_by(db.func.random()).limit(6).all()
     goals = db.session.query(Goal).all()
     return render_template('index.html',
-                           teachers=ch_teachers,
+                           teachers=teachers,
                            goals=goals)
 
 
